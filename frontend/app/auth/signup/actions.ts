@@ -1,7 +1,8 @@
 "use server"
 
 import { z } from "zod"; 
-import { PrismaClient, Role } from "@prisma/client";
+import {  Role } from "@prisma/client";
+import { prisma } from "../lib/prisma";
 
 const signupSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }).trim(),
@@ -16,8 +17,6 @@ const signupSchema = z.object({
     .min(8, { message: "Confirm Password must be at least 8 characters" })
     .trim(),
 });
-
-const prisma = new PrismaClient();
 
 export async function signup(prev: any, formData: FormData) {
   const result = signupSchema.safeParse(Object.fromEntries(formData));
