@@ -4,6 +4,11 @@ import { useActionState } from "react";
 import { Wallet } from "lucide-react";
 import Link from "next/link";
 
+export enum Role {
+    BORROWER = "BORROWER",
+    LENDER = "LENDER",
+}
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -39,16 +44,16 @@ export default function SignUp() {
           <div className="space-y-2">
             <Label>I want to be a:</Label>
             <RadioGroup
-              defaultValue="borrower"
+              defaultValue={Role.BORROWER}
               name="role"
               className="flex space-x-4"
             >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="borrower" id="borrower" />
+                <RadioGroupItem value={Role.BORROWER} id="borrower" />
                 <Label htmlFor="borrower">Borrower</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="lender" id="lender" />
+                <RadioGroupItem value={Role.LENDER} id="lender" />
                 <Label htmlFor="lender">Lender</Label>
               </div>
             </RadioGroup>

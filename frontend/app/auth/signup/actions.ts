@@ -1,8 +1,11 @@
+"use server"
+
 import { z } from "zod"; 
+import { PrismaClient, Role } from "@prisma/client";
 
 const signupSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }).trim(),
-  role: z.enum(["borrower", "lender"]),
+  role: z.enum([Role.BORROWER, Role.LENDER]),
   wallet: z.string(),
   password: z
     .string()
@@ -14,17 +17,33 @@ const signupSchema = z.object({
     .trim(),
 });
 
+const prisma = new PrismaClient();
+
 export async function signup(prev: any, formData: FormData) {
   const result = signupSchema.safeParse(Object.fromEntries(formData));
 
   if (!result.success) {
-    console.log("ERROR: ", result.error.flatten().fieldErrors)
     return {
       errors: result.error.flatten().fieldErrors,
     };
   }
 
-  const { name, role, password } = result.data;
+  const { name, role, wallet, password, confirmPassword  } = result.data;
 
-  console.log("DATA: ", result.data)
+  if (confirmPassword !== password) {
+    return {
+      errors: {
+        confirmPassword: "Passwords do not match",
+      },
+    };
+  }
+
+  await prisma.user.create({
+    data: {
+        name,
+        role,
+        wallet, 
+        password
+    }
+  })
 }
