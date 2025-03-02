@@ -1,20 +1,32 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Wallet } from "lucide-react"
-import Link from "next/link"
+import { useActionState } from "react";
+import { Wallet } from "lucide-react";
+import Link from "next/link";
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { signup } from "./actions";
+import { useFormStatus } from "react-dom";
 
 export default function SignUp() {
-  const [role, setRole] = useState("borrower")
+  const [state, signupAction] = useActionState(signup, undefined);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
+    <form
+      action={signupAction}
+      className="flex min-h-screen items-center justify-center bg-muted/50 p-4"
+    >
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center">
@@ -26,7 +38,11 @@ export default function SignUp() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>I want to be a:</Label>
-            <RadioGroup defaultValue="borrower" onValueChange={setRole} className="flex space-x-4">
+            <RadioGroup
+              defaultValue="borrower"
+              name="role"
+              className="flex space-x-4"
+            >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="borrower" id="borrower" />
                 <Label htmlFor="borrower">Borrower</Label>
@@ -38,35 +54,45 @@ export default function SignUp() {
             </RadioGroup>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            <Input id="name" placeholder="John Doe" />
+            <Label htmlFor="name">Name</Label>
+            <Input id="name" required name="name" placeholder="John Doe" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="wallet">Wallet Address</Label>
-            <Input id="wallet" placeholder="0x..." />
+            <Input id="wallet" required name="wallet" placeholder="0x..." />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" />
+            <Input id="password" required name="password" type="password" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirm">Confirm Password</Label>
-            <Input id="confirm" type="password" />
+            <Input id="confirm" required name="confirmPassword"  type="password" />
           </div>
-          <Button className="w-full" size="lg">
-            Create Account
-          </Button>
+          <SignupButton />
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
           <div className="text-sm text-muted-foreground">
             Already have an account?{" "}
-            <Link href="/sign-in" className="text-primary underline-offset-4 hover:underline">
+            <Link
+              href="/sign-in"
+              className="text-primary underline-offset-4 hover:underline"
+            >
               Sign in
             </Link>
           </div>
         </CardFooter>
       </Card>
-    </div>
-  )
+    </form>
+  );
 }
 
+function SignupButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button type="submit" disabled={pending} className="w-full" size="lg">
+      Create Account
+    </Button>
+  )
+}
