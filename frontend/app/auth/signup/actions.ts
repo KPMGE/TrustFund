@@ -3,6 +3,9 @@
 import { z } from "zod"; 
 import {  Role } from "@prisma/client";
 import { prisma } from "../lib/prisma";
+import bcrypt from "bcrypt";
+
+const HASH_SALT = 10
 
 const signupSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }).trim(),
@@ -37,12 +40,13 @@ export async function signup(prev: any, formData: FormData) {
     };
   }
 
+  const hashedPassword = await bcrypt.hash(password, HASH_SALT);
   await prisma.user.create({
     data: {
         name,
         role,
         wallet, 
-        password
+        password: hashedPassword
     }
   })
 }
