@@ -18,10 +18,10 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { login } from "./actions";
 import { useFormStatus } from "react-dom";
+import { Role } from "../signup/page";
 
 export default function SignIn() {
   const [state, loginAction] = useActionState(login, undefined);
-  const [role, setRole] = useState("borrower");
 
   return (
     <form
@@ -42,17 +42,16 @@ export default function SignIn() {
           <div className="space-y-2">
             <Label>I am a:</Label>
             <RadioGroup
-              defaultValue="borrower"
+              defaultValue={Role.BORROWER}
               name="role"
-              onValueChange={setRole}
               className="flex space-x-4"
             >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="borrower" id="borrower" />
+                <RadioGroupItem value={Role.BORROWER} id="borrower" />
                 <Label htmlFor="borrower">Borrower</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="lender" id="lender" />
+                <RadioGroupItem value={Role.LENDER} id="lender" />
                 <Label htmlFor="lender">Lender</Label>
               </div>
             </RadioGroup>

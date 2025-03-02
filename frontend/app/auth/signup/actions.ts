@@ -4,6 +4,8 @@ import { z } from "zod";
 import {  Role } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import bcrypt from "bcrypt";
+import { redirect } from "next/navigation";
+import { createSession } from "../lib/session";
 
 const HASH_SALT = 10
 
@@ -41,7 +43,7 @@ export async function signup(prev: any, formData: FormData) {
   }
 
   const hashedPassword = await bcrypt.hash(password, HASH_SALT);
-  await prisma.user.create({
+  const user = await prisma.user.create({
     data: {
         name,
         role,
@@ -49,4 +51,12 @@ export async function signup(prev: any, formData: FormData) {
         password: hashedPassword
     }
   })
+
+  await createSession(user.id, role);
+
+  if (role === Role.BORROWER) {
+    redirect("/dashboard/borrower");
+  } else {
+    redirect("/dashboard/lender");
+  }
 }

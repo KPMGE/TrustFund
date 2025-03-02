@@ -80,7 +80,7 @@ export default function SignUp() {
           <div className="text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link
-              href="/sign-in"
+              href="/auth/signin"
               className="text-primary underline-offset-4 hover:underline"
             >
               Sign in

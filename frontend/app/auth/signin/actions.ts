@@ -2,17 +2,14 @@
 
 import { z } from "zod";
 import { redirect } from "next/navigation";
+import bcrypt from "bcrypt";
 import { createSession, deleteSession } from "../lib/session";
-
-const testUser = {
-  id: "1",
-  email: "contact@cosdensolutions.io",
-  password: "12345678",
-};
+import { prisma } from "../lib/prisma";
+import { Role } from "@prisma/client";
 
 const loginSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }).trim(),
-  role: z.enum(["borrower", "lender"]),
+  role: z.enum([Role.LENDER, Role.BORROWER]),
   password: z
     .string()
     .min(8, { message: "Password must be at least 8 characters" })
@@ -23,7 +20,6 @@ export async function login(prevState: any, formData: FormData) {
   const result = loginSchema.safeParse(Object.fromEntries(formData));
 
   if (!result.success) {
-    console.log("ERROR: ", result.error.flatten().fieldErrors)
     return {
       errors: result.error.flatten().fieldErrors,
     };
@@ -31,19 +27,35 @@ export async function login(prevState: any, formData: FormData) {
 
   const { name, role, password } = result.data;
 
-  console.log("DATA: ", result.data)
+  const user = await prisma.user.findFirst({
+    where: {
+      AND: {
+        name,
+        role
+      }
+    }
+  })
 
-  // if (email !== testUser.email || password !== testUser.password) {
-  //   return {
-  //     errors: {
-  //       email: ["Invalid email or password"],
-  //     },
-  //   };
-  // }
+  if (!user) {
+    return {
+      errors: {
+        name: "User not found",
+      },
+    };
+  }
 
-  await createSession(testUser.id);
+  const isPasswordCorrect = await bcrypt.compare(password, user.password)
+  if (!isPasswordCorrect) {
+    return {
+      errors: {
+        password: "Password is incorrect",  
+      },
+    };
+  }
 
-  if (role === 'borrower') {
+  await createSession(user.id, role);
+
+  if (role === Role.BORROWER) {
     redirect("/dashboard/borrower");
   } else {
     redirect("/dashboard/lender");
