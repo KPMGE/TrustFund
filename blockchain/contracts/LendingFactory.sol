@@ -5,6 +5,7 @@ import "./LendingContract.sol";
 
 contract LendingFactory {
     struct BorrowingRequest {
+        uint256 id;
         address borrower;
         uint256 loanAmount;
         uint256 interestRate;
@@ -25,6 +26,7 @@ contract LendingFactory {
         uint256 _repaymentPeriod
     ) external {
         borrowingRequests.push(BorrowingRequest({
+            id: borrowingRequests.length,
             borrower: msg.sender,
             loanAmount: _loanAmount,
             interestRate: _interestRate,

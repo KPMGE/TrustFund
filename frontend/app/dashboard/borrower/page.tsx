@@ -19,10 +19,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useContract } from "@/hooks/use-contract";
 import { useEffect, useState } from "react";
+import { useLendingFactory } from "@/hooks/use-lending-factory";
 
 type BorrowingRequest = {
+  id: string;
   borrower: string;
   loanAmount: string;
   interestRate: string;
@@ -30,12 +31,9 @@ type BorrowingRequest = {
   isFunded: boolean;
 };
 
-const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3"
-const CONTRACT_ABI_PATH = "/abi/LendingFactory.json"
-
 export default function BorrowerDashboard() {
   const [requests, setRequests] = useState<BorrowingRequest[]>([])
-  const contract = useContract(CONTRACT_ADDRESS, CONTRACT_ABI_PATH)
+  const contract = useLendingFactory()
 
   useEffect(() => {
     if (!contract) return
@@ -87,8 +85,8 @@ function BorrowerRequestsTable({ requests }: BorrowerRequestsTableProps) {
       </TableHeader>
       <TableBody>
         {requests.map((request) => (
-          <TableRow key={request.borrower}>
-            <TableCell>{request.borrower}</TableCell>
+          <TableRow key={request.id}>
+            <TableCell>{request.id}</TableCell>
             <TableCell>{request.loanAmount}</TableCell>
             <TableCell>{request.repaymentPeriod}</TableCell>
             <TableCell>{request.interestRate}</TableCell>

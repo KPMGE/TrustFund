@@ -7,13 +7,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "@/components/ui/use-toast"
-import { useContract } from "@/hooks/use-contract"
-
-const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3"
-const CONTRACT_ABI_PATH = "/abi/LendingFactory.json"
+import { useLendingFactory } from "@/hooks/use-lending-factory"
 
 export default function NewLoanRequest() {
-  const contract = useContract(CONTRACT_ADDRESS, CONTRACT_ABI_PATH)
+  const contract = useLendingFactory()
 
   async function createLoanRequest(formData: FormData) {
     const amount = formData.get("amount")
@@ -37,7 +34,12 @@ export default function NewLoanRequest() {
         title: "Success",
         description: "Borrowing request created successfully",
       });
+
+      setTimeout(() => {
+        window.location.href = "/dashboard/borrower"
+      }, 300)
     } catch(e) {
+      console.error(e)
       toast({
         variant: "destructive",
         title: "Error",
