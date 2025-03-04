@@ -33,7 +33,7 @@ export default function SignIn() {
           <div className="flex justify-center">
             <Wallet className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl">Sign in to DeFi Loans</CardTitle>
+          <CardTitle className="text-2xl">Sign in to TrustFund</CardTitle>
           <CardDescription>
             Enter your wallet details to sign in
           </CardDescription>

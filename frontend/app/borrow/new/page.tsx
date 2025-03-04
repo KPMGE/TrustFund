@@ -1,24 +1,54 @@
 "use client"
 
-import { ArrowLeft } from "lucide-react"
-import Link from "next/link"
-
+import { Toaster } from "@/components/error-toast"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
+import { toast } from "@/components/ui/use-toast"
+import { useContract } from "@/hooks/use-contract"
+
+const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+const CONTRACT_ABI_PATH = "/abi/LendingFactory.json"
 
 export default function NewLoanRequest() {
+  const contract = useContract(CONTRACT_ADDRESS, CONTRACT_ABI_PATH)
+
+  async function createLoanRequest(formData: FormData) {
+    const amount = formData.get("amount")
+    const term = formData.get("term")
+    const interest = formData.get("interest")
+
+    if (!contract) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No contract found, try again",
+      });
+      return
+    }
+
+    try {
+      await contract.createBorrowingRequest(amount, term, interest)
+
+      toast({
+        variant: "default",
+        title: "Success",
+        description: "Borrowing request created successfully",
+      });
+    } catch(e) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Erro creating borrowing request, try again",
+      });
+    }
+  }
+
   return (
     <div className="container mx-auto p-4">
-      <Button variant="ghost" asChild className="mb-4">
-        <Link href="/dashboard">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Dashboard
-        </Link>
-      </Button>
+      <Toaster />
 
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
@@ -26,15 +56,15 @@ export default function NewLoanRequest() {
           <CardDescription>Fill in the details for your loan request</CardDescription>
         </CardHeader>
         <CardContent>
-          <form className="space-y-4">
+          <form action={createLoanRequest}  className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="amount">Loan Amount (USD)</Label>
-              <Input id="amount" placeholder="5000" type="number" />
+              <Label htmlFor="amount">Loan Amount (ETH)</Label>
+              <Input required name="amount" placeholder="0.1" type="number" />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="term">Loan Term</Label>
-              <Select>
+              <Select required name="term">
                 <SelectTrigger>
                   <SelectValue placeholder="Select loan duration" />
                 </SelectTrigger>
@@ -49,43 +79,11 @@ export default function NewLoanRequest() {
 
             <div className="space-y-2">
               <Label htmlFor="interest">Proposed Interest Rate (%)</Label>
-              <Input id="interest" placeholder="5.0" type="number" step="0.1" />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="purpose">Loan Purpose</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select purpose" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="business">Business Expansion</SelectItem>
-                  <SelectItem value="education">Education</SelectItem>
-                  <SelectItem value="debt">Debt Consolidation</SelectItem>
-                  <SelectItem value="personal">Personal</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Additional Details</Label>
-              <Textarea
-                id="description"
-                placeholder="Provide any additional information that might help lenders evaluate your request..."
-                className="min-h-[100px]"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="collateral">Collateral Address (Optional)</Label>
-              <Input id="collateral" placeholder="0x..." />
-              <p className="text-sm text-muted-foreground">
-                Enter the smart contract address of any tokens you wish to use as collateral
-              </p>
+              <Input required name="interest" placeholder="5.0" type="number" step="0.1" />
             </div>
 
             <Button type="submit" className="w-full">
-              Submit Loan Request
+              Create Loan Request
             </Button>
           </form>
         </CardContent>
@@ -93,4 +91,3 @@ export default function NewLoanRequest() {
     </div>
   )
 }
-
