@@ -1,5 +1,6 @@
 "use client"
 
+import { ethers } from "ethers"
 import { Toaster } from "@/components/error-toast"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -17,6 +18,15 @@ export default function NewLoanRequest() {
     const term = formData.get("term")
     const interest = formData.get("interest")
 
+    if (!amount || !term || !interest) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "All fields are required",
+      });
+      return
+    }
+
     if (!contract) {
       toast({
         variant: "destructive",
@@ -27,7 +37,8 @@ export default function NewLoanRequest() {
     }
 
     try {
-      await contract.createBorrowingRequest(amount, term, interest)
+      const convertedAmount = ethers.parseEther(amount.toString())
+      await contract.createBorrowingRequest(convertedAmount, term, interest)
 
       toast({
         variant: "default",

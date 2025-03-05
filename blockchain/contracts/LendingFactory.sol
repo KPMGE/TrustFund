@@ -54,9 +54,6 @@ contract LendingFactory {
             request.repaymentPeriod
         );
 
-        // Transfer the loan amount to the contract
-        payable(address(newContract)).transfer(msg.value);
-
         // Fund the loan in the LendingContract
         newContract.fundLoan{value: msg.value}();
 

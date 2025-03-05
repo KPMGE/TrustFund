@@ -3,6 +3,7 @@
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 
+import { ethers } from "ethers";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -76,7 +77,7 @@ function BorrowerRequestsTable({ requests }: BorrowerRequestsTableProps) {
       <TableHeader>
         <TableRow>
           <TableHead>Request ID</TableHead>
-          <TableHead>Amount</TableHead>
+          <TableHead>Amount(ETH)</TableHead>
           <TableHead>Term</TableHead>
           <TableHead>Interest Rate</TableHead>
           <TableHead>Status</TableHead>
@@ -87,7 +88,7 @@ function BorrowerRequestsTable({ requests }: BorrowerRequestsTableProps) {
         {requests.map((request) => (
           <TableRow key={request.id}>
             <TableCell>{request.id}</TableCell>
-            <TableCell>{request.loanAmount}</TableCell>
+            <TableCell>{ethers.formatEther(request.loanAmount)}</TableCell>
             <TableCell>{request.repaymentPeriod}</TableCell>
             <TableCell>{request.interestRate}</TableCell>
             <TableCell>

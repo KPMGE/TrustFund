@@ -12,9 +12,9 @@ import { useEffect, useState } from "react"
 type BorrowingRequest = {
   id: string,
   borrower: string;
-  loanAmount: string;
-  interestRate: string;
-  repaymentPeriod: string;
+  loanAmount: number;
+  interestRate: number;
+  repaymentPeriod: number;
   isFunded: boolean;
 };
 
@@ -54,7 +54,9 @@ export default function LenderDashboard() {
     }
 
     try {
-      await contract.fundBorrowingRequest(request.id)
+      await contract.fundBorrowingRequest(request.id, {
+        value: request.loanAmount,
+      })
 
       toast({
         variant: "default",
@@ -104,7 +106,7 @@ function LenderRequestsTable({ requests, onFundRequest }: LenderRequestsTablePro
       <TableHeader>
         <TableRow>
           <TableHead>Request ID</TableHead>
-          <TableHead>Amount</TableHead>
+          <TableHead>Amount(ETH)</TableHead>
           <TableHead>Term</TableHead>
           <TableHead>Interest Rate</TableHead>
           <TableHead>Status</TableHead>
@@ -115,7 +117,7 @@ function LenderRequestsTable({ requests, onFundRequest }: LenderRequestsTablePro
         {requests.map((request, idx) => (
           <TableRow key={request.id}>
             <TableCell>{request.id}</TableCell>
-            <TableCell>{request.loanAmount}</TableCell>
+            <TableCell>{ethers.formatEther(request.loanAmount)}</TableCell>
             <TableCell>{request.repaymentPeriod}</TableCell>
             <TableCell>{request.interestRate}</TableCell>
             <TableCell>
