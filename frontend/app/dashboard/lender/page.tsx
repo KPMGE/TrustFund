@@ -1,16 +1,35 @@
-"use client"
+"use client";
 
-import { Toaster } from "@/components/error-toast"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { toast } from "@/components/ui/use-toast"
-import { useLendingFactory } from "@/hooks/use-lending-factory"
-import { ethers } from "ethers"
-import { useEffect, useState } from "react"
+import { Toaster } from "@/components/error-toast";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { toast } from "@/components/ui/use-toast";
+import { useLendingFactory } from "@/hooks/use-lending-factory";
+import { ethers } from "ethers";
+import { useEffect, useState } from "react";
+import {
+  getContractAbi,
+  getPayedLoans,
+  RepayedRequest,
+} from "../borrower/page";
+import { connectWallet } from "@/hooks/use-wallet";
 
 type BorrowingRequest = {
-  id: string,
+  id: string;
   borrower: string;
   loanAmount: number;
   interestRate: number;
@@ -19,29 +38,49 @@ type BorrowingRequest = {
 };
 
 async function getBorrowingRequestsCreated(contract: ethers.Contract | null) {
-  if (!contract) return []
+  if (!contract) return [];
 
   const filter = contract.filters.BorrowingRequestCreated();
   const events = await contract.queryFilter(filter);
 
   const votes = events.map((event: any) => ({
     requestId: event.args?.[0],
-    borrower: event.args?.[1]
+    borrower: event.args?.[1],
   }));
 
   return votes;
 }
 
+export const contractsPromises = (deployedContracts: string[]) =>
+  deployedContracts.map(async (c) => {
+    const signer = await connectWallet();
+    const abi = await getContractAbi("/abi/LendingContract.json");
+    const contractInstance = new ethers.Contract(c, abi, signer);
+    return contractInstance;
+  });
+
 export default function LenderDashboard() {
-  const [requests, setRequests] = useState<BorrowingRequest[]>([])
-  const contract = useLendingFactory()
+  const [requests, setRequests] = useState<BorrowingRequest[]>([]);
+  const [repayedRequests, setRepayedRequests] = useState<RepayedRequest[]>([]);
+
+  const contract = useLendingFactory();
 
   useEffect(() => {
-    if (!contract) return
-      contract.getBorrowingRequests().then((requests: BorrowingRequest[]) => {
-        setRequests(requests)
-      })
-  }, [contract])
+    async function getData() {
+      if (!contract) return;
+      const requests = await contract.getBorrowingRequests();
+      const deployedContracts = await contract.getLendingContracts();
+      const contracts = await Promise.all(contractsPromises(deployedContracts));
+      const repayedRequests = (
+        await Promise.all(contracts.map((c) => getPayedLoans(c)))
+      ).flat();
+
+      setRequests(requests);
+      setRepayedRequests(repayedRequests);
+    }
+
+    getData();
+  }, [contract]);
 
   async function fundRequest(request: BorrowingRequest) {
     if (!contract) {
@@ -50,21 +89,27 @@ export default function LenderDashboard() {
         title: "Error",
         description: "No contract found, try again",
       });
-      return
+      return;
     }
 
     try {
-      await contract.fundBorrowingRequest(request.id, {
+      console.log("Sending money to contract...");
+      const tx1 = await contract.receiveEth({ valu: request.loanAmount });
+      await tx1.wait();
+
+      console.log("Funding borrowing request...");
+      const tx = await contract.fundBorrowingRequest(request.id, {
         value: request.loanAmount,
-      })
+      });
+      await tx.wait();
 
       toast({
         variant: "default",
         title: "Success",
         description: "Borrowing funded created successfully",
       });
-    } catch(e) {
-      console.error(e)
+    } catch (e) {
+      console.error(e);
 
       toast({
         variant: "destructive",
@@ -85,22 +130,32 @@ export default function LenderDashboard() {
       <Card>
         <CardHeader>
           <CardTitle>Available Loan Requests</CardTitle>
-          <CardDescription>Browse and fund loan requests from borrowers</CardDescription>
+          <CardDescription>
+            Browse and fund loan requests from borrowers
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <LenderRequestsTable requests={requests} onFundRequest={fundRequest} />
+          <LenderRequestsTable
+            requests={requests}
+            repayedRequests={repayedRequests}
+            onFundRequest={fundRequest}
+          />
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
-
 
 type LenderRequestsTableProps = {
-  requests: BorrowingRequest[]
-  onFundRequest: (request: BorrowingRequest) => void
-}
-function LenderRequestsTable({ requests, onFundRequest }: LenderRequestsTableProps) {
+  requests: BorrowingRequest[];
+  repayedRequests: RepayedRequest[];
+  onFundRequest: (request: BorrowingRequest) => void;
+};
+function LenderRequestsTable({
+  requests,
+  onFundRequest,
+  repayedRequests,
+}: LenderRequestsTableProps) {
   return (
     <Table>
       <TableHeader>
@@ -121,17 +176,31 @@ function LenderRequestsTable({ requests, onFundRequest }: LenderRequestsTablePro
             <TableCell>{request.repaymentPeriod}</TableCell>
             <TableCell>{request.interestRate}</TableCell>
             <TableCell>
-              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-${request.isFunded ? "green" : "yellow"}-800`}>
-                {request.isFunded ? "Funded" : "Pending"}
+              <span
+                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-${
+                  request.isFunded ? "green" : "yellow"
+                }-800`}
+              >
+                {repayedRequests.find((r) => r.borrower === request.borrower)
+                  ? "Repayed"
+                  : request.isFunded
+                  ? "Funded"
+                  : "Pending"}
               </span>
             </TableCell>
             <TableCell>{new Date().toLocaleDateString()}</TableCell>
             <TableCell>
-              <Button onClick={() => onFundRequest(request)} disabled={request.isFunded} size="sm">Fund Loan</Button>
+              <Button
+                onClick={() => onFundRequest(request)}
+                disabled={request.isFunded}
+                size="sm"
+              >
+                Fund Loan
+              </Button>
             </TableCell>
           </TableRow>
         ))}
       </TableBody>
     </Table>
-  )
+  );
 }

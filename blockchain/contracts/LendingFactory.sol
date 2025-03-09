@@ -53,7 +53,7 @@ contract LendingFactory {
             request.interestRate,
             request.repaymentPeriod
         );
-
+ 
         // Fund the loan in the LendingContract
         newContract.fundLoan{value: msg.value}();
 
@@ -71,5 +71,15 @@ contract LendingFactory {
     // Get all lending contracts
     function getLendingContracts() external view returns (address[] memory) {
         return lendingContracts;
+    }
+
+    function receiveEth() external  payable  {}
+
+    receive() external payable {}
+
+    fallback() external payable {}
+
+     function getBalance() external view returns (uint256) {
+        return address(this).balance;
     }
 }

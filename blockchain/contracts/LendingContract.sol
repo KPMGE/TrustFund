@@ -37,13 +37,26 @@ contract LendingContract {
     function repayLoan() external payable {
         require(msg.sender == borrower, "Only the borrower can repay the loan");
         require(!isRepaid, "Loan is already repaid");
-        require(block.timestamp <= dueDate, "Loan is overdue");
 
         uint256 totalRepayment = loanAmount + (loanAmount * interestRate) / 10000;
         require(msg.value >= totalRepayment, "Insufficient repayment amount");
 
         isRepaid = true;
         payable(lender).transfer(totalRepayment);
-        emit LoanRepaid(borrower, msg.value);
+        emit LoanRepaid(borrower, totalRepayment);
+    }
+
+    function receiveEth() external  payable  {}
+
+     function isDueDate() public view returns (bool) {
+        return block.timestamp >= dueDate;
+    }
+
+    receive() external payable {}
+
+    fallback() external payable {}
+
+    function getBalance() external view returns (uint256) {
+        return address(this).balance;
     }
 }

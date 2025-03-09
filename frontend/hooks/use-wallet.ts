@@ -2,7 +2,7 @@ import { toast } from "@/components/ui/use-toast";
 import { ethers } from "ethers";
 import { useEffect, useState } from "react";
 
-async function connectWallet() {
+export async function connectWallet() {
   if (!window.ethereum) {
     toast({
       variant: "destructive",
@@ -14,11 +14,11 @@ async function connectWallet() {
   }
 
   try {
-    // const provider = new ethers.BrowserProvider(window.ethereum);
-    // await window.ethereum.request({ method: "eth_requestAccounts" });
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    await window.ethereum.request({ method: "eth_requestAccounts" });
 
     // TODO: remove, config for hardhat
-    const provider = new ethers.JsonRpcProvider("http://localhost:8545");
+    // const provider = new ethers.JsonRpcProvider("http://localhost:8545");
     const signer = await provider.getSigner();
 
     return signer;

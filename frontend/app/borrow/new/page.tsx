@@ -38,7 +38,8 @@ export default function NewLoanRequest() {
 
     try {
       const convertedAmount = ethers.parseEther(amount.toString())
-      await contract.createBorrowingRequest(convertedAmount, term, interest)
+      const tx = await contract.createBorrowingRequest(convertedAmount, interest, term)
+      await tx.wait()
 
       toast({
         variant: "default",
@@ -69,10 +70,10 @@ export default function NewLoanRequest() {
           <CardDescription>Fill in the details for your loan request</CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={createLoanRequest}  className="space-y-4">
+          <form action={createLoanRequest} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="amount">Loan Amount (ETH)</Label>
-              <Input required name="amount" placeholder="0.1" type="number" />
+              <Input required name="amount" placeholder="0.1" type="text" />
             </div>
 
             <div className="space-y-2">
