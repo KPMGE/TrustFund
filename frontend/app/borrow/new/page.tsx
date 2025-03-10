@@ -9,11 +9,21 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "@/components/ui/use-toast"
 import { useLendingFactory } from "@/hooks/use-lending-factory"
+import { useEffect, useState } from "react"
+import { Loading } from "@/components/loading"
 
 export default function NewLoanRequest() {
+  const [isLoading, setIsLoading] = useState(false) 
   const contract = useLendingFactory()
 
-  async function createLoanRequest(formData: FormData) {
+  useEffect(() => {
+    console.log("LOADING", isLoading)
+  }, [isLoading])
+
+  async function createLoanRequest(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    const formData = new FormData(event.currentTarget)
     const amount = formData.get("amount")
     const term = formData.get("term")
     const interest = formData.get("interest")
@@ -36,6 +46,8 @@ export default function NewLoanRequest() {
       return
     }
 
+    setIsLoading(true)
+
     try {
       const convertedAmount = ethers.parseEther(amount.toString())
       const tx = await contract.createBorrowingRequest(convertedAmount, interest, term)
@@ -57,6 +69,8 @@ export default function NewLoanRequest() {
         title: "Error",
         description: "Erro creating borrowing request, try again",
       });
+    } finally { 
+      setIsLoading(false)
     }
   }
 
@@ -70,7 +84,7 @@ export default function NewLoanRequest() {
           <CardDescription>Fill in the details for your loan request</CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={createLoanRequest} className="space-y-4">
+          <form onSubmit={createLoanRequest} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="amount">Loan Amount (ETH)</Label>
               <Input required name="amount" placeholder="0.1" type="text" />
@@ -96,8 +110,8 @@ export default function NewLoanRequest() {
               <Input required name="interest" placeholder="5.0" type="number" step="0.1" />
             </div>
 
-            <Button type="submit" className="w-full">
-              Create Loan Request
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? <Loading size="lg" variant="white" /> : "Create Loan Request"} 
             </Button>
           </form>
         </CardContent>

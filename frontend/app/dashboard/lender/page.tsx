@@ -27,6 +27,7 @@ import {
   RepayedRequest,
 } from "../borrower/page";
 import { connectWallet } from "@/hooks/use-wallet";
+import { Loading } from "@/components/loading";
 
 type BorrowingRequest = {
   id: string;
@@ -62,6 +63,7 @@ export const contractsPromises = (deployedContracts: string[]) =>
 export default function LenderDashboard() {
   const [requests, setRequests] = useState<BorrowingRequest[]>([]);
   const [repayedRequests, setRepayedRequests] = useState<RepayedRequest[]>([]);
+  const [loadingRequestIdx, setLoadingRequestIdx] = useState(-1);
 
   const contract = useLendingFactory();
 
@@ -82,7 +84,7 @@ export default function LenderDashboard() {
     getData();
   }, [contract]);
 
-  async function fundRequest(request: BorrowingRequest) {
+  async function fundRequest(request: BorrowingRequest, idx: number) {
     if (!contract) {
       toast({
         variant: "destructive",
@@ -91,6 +93,8 @@ export default function LenderDashboard() {
       });
       return;
     }
+
+    setLoadingRequestIdx(idx)
 
     try {
       console.log("Sending money to contract...");
@@ -116,6 +120,8 @@ export default function LenderDashboard() {
         title: "Error",
         description: "Error funding borrowing request, try again",
       });
+    } finally {
+      setLoadingRequestIdx(-1);
     }
   }
 
@@ -136,6 +142,7 @@ export default function LenderDashboard() {
         </CardHeader>
         <CardContent>
           <LenderRequestsTable
+            loadingRequestIdx={loadingRequestIdx}
             requests={requests}
             repayedRequests={repayedRequests}
             onFundRequest={fundRequest}
@@ -149,12 +156,14 @@ export default function LenderDashboard() {
 type LenderRequestsTableProps = {
   requests: BorrowingRequest[];
   repayedRequests: RepayedRequest[];
-  onFundRequest: (request: BorrowingRequest) => void;
+  onFundRequest: (request: BorrowingRequest, idx: number) => void;
+  loadingRequestIdx: number;
 };
 function LenderRequestsTable({
   requests,
   onFundRequest,
   repayedRequests,
+  loadingRequestIdx,
 }: LenderRequestsTableProps) {
   return (
     <Table>
@@ -191,11 +200,16 @@ function LenderRequestsTable({
             <TableCell>{new Date().toLocaleDateString()}</TableCell>
             <TableCell>
               <Button
-                onClick={() => onFundRequest(request)}
+                onClick={() => onFundRequest(request, idx)}
                 disabled={request.isFunded}
                 size="sm"
+                className="w-full"
               >
-                Fund Loan
+                {loadingRequestIdx === idx ? (
+                  <Loading size="lg" variant="white" />
+                ) : (
+                  "Fund Loan"
+                )}
               </Button>
             </TableCell>
           </TableRow>
